@@ -7,7 +7,7 @@ Linkers:
 - m
 
 Simple main function:
-```
+```cpp
 #include "sg3d.h"
 
 Graphics g(800, 600, "SG3D - Playground"); // Create a new SG graphic
