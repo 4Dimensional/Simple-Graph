@@ -31,8 +31,8 @@ sg3d::tri pillar1 = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, g._R
 sg3d::tri cube1 = {{2, 5, 0}, {2, 5, 0}, {2, 5, 0}, {0, 0, 0}, {0, 0, 0}, g._RGB(0, 0, 0)};
 
 // Import the pillar and cube model
-std::vector<sg3d::tri> pillar_object1 = g3d.load_object("src/models/complex/pillar.sg3d", pillar1, g);
-std::vector<sg3d::tri> cube_object1 = g3d.load_object("src/models/primitive/cube.sg3d", cube1, g);
+std::vector<sg3d::tri> pillar_object1 = g3d.load_object("pillar.sg3d", pillar1, g);
+std::vector<sg3d::tri> cube_object1 = g3d.load_object("cube.sg3d", cube1, g);
 
 void Render()
 {
