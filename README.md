@@ -37,8 +37,8 @@ bool strafeleft = false;
 bool straferight = false;
 
 // Create a position to summon the pillar and cube model
-sg3d::tri pillar1 = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, g._RGB(0, 0, 0)};
-sg3d::tri cube1 = {{2, 5, 0}, {2, 5, 0}, {2, 5, 0}, {0, 0, 0}, {0, 0, 0}, g._RGB(0, 0, 0)};
+sg3d::tri pillar1 = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, g._RGB(0, 0, 0), 0};
+sg3d::tri cube1 = {{2, 5, 0}, {2, 5, 0}, {2, 5, 0}, {0, 0, 0}, {0, 0, 0}, g._RGB(0, 0, 0), 1};
 
 // Import the pillar and cube model
 std::vector<sg3d::tri> pillar_object1 = g3d.load_object("pillar.sg3d", pillar1, g);
