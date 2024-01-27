@@ -1,8 +1,6 @@
 // Simple graphics 3d
 // Handles graphical inputs
 
-
-
 #include "sg.h"
 #include <cmath>
 #include <algorithm>
@@ -19,18 +17,19 @@ public:
         float x, y;
     };
 
-    struct tri {
-        p3d p1, p2, p3, rot, rot_center;
-        unsigned long int color;
-    };
-
     struct clr {
         int r, g, b;
     };
 
     struct cam {
         float roy,rox,roz,zpos,ypos,xpos,coy,cox,coz;
-        int clippingPlane;
+        float clippingPlane;
+    };
+
+    struct tri {
+        p3d p1, p2, p3, rot, rot_center;
+        unsigned long int color;
+        int wireframe;
     };
 
     struct obj {
@@ -90,7 +89,7 @@ public:
                 trot.x += adder.rot.x; trot.y += adder.rot.y; trot.z += adder.rot.z;
                 trot_center.x += adder.rot_center.x; trot_center.y += adder.rot_center.y; trot_center.z += adder.rot_center.z;
 
-                tri t_tri = { p1, p2, p3, trot, trot_center, g._RGB(tcolor.r, tcolor.g, tcolor.b) };
+                tri t_tri = { p1, p2, p3, trot, trot_center, g._RGB(tcolor.r, tcolor.g, tcolor.b)+adder.color, adder.wireframe };
                 tris.push_back(t_tri);
             }
         }
@@ -179,7 +178,7 @@ private:
     bool cameraenabled = false;
     cam current_camera;
 
-    static p3d rot3d(p3d p1, p3d rot)
+    p3d rot3d(p3d p1, p3d rot)
     {
         p3d r1;
 
@@ -192,7 +191,12 @@ private:
         return r1;
     }
 
-    static p3d calculateDist(tri t)
+    float pythTheor(float xlen, float ylen)
+    {
+        return sqrt((xlen*xlen)+(ylen*ylen));
+    }
+
+    float calculateDist(tri t)
     {
         p3d p1 = t.p1;
         p3d p2 = t.p2;
@@ -223,9 +227,16 @@ private:
         r3.y += rot_center.y;
         r3.z += rot_center.z;
 
-        p3d avg = { (r1.x+r2.x+r3.x)/3, (r1.y+r2.y+r3.y)/3, (r1.z+r2.z+r3.z)/3 };
+        // Shoot ray from camera to the plane average
+        p3d cameraPosition = {current_camera.xpos,  current_camera.ypos, current_camera.zpos};
+        p3d avg = { (r1.x+r2.x+r3.x), (r1.y+r2.y+r3.y), (r1.z+r2.z+r3.z) };
 
-        return avg;
+        double deltaX = cameraPosition.x - avg.x;
+        double deltaY = cameraPosition.y - avg.y;
+        double deltaZ = cameraPosition.z - avg.z;
+
+        float raydist = sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
+        return raydist;
     }
 
     p2d projectPoint(p3d pnt, float FOV)
@@ -236,7 +247,7 @@ private:
         return ret;
     }
 
-    void drawTri(p3d p1, p3d p2, p3d p3, p3d rot, p3d rot_center, unsigned int color, Graphics g)
+    void drawTri(p3d p1, p3d p2, p3d p3, p3d rot, p3d rot_center, unsigned int color, Graphics g, int wireframe)
     {
         short unsigned int w_wid = g.R_WINDOW_WIDTH;
         short unsigned int w_hei = g.R_WINDOW_HEIGHT;
@@ -275,14 +286,16 @@ private:
         s2 = { (s2dif.x*100)+(w_wid/2), (s2dif.y*100)+(w_hei/2) };
         s3 = { (s3dif.x*100)+(w_wid/2), (s3dif.y*100)+(w_hei/2) };
 
-        /* Wireframe
-        if ((r1.z+r2.z)/2 > 0)
-            g._DrawLine(s1.x, s1.y, s2.x, s2.y, color);
-        if ((r2.z+r3.z)/2 > 0)
-            g._DrawLine(s2.x, s2.y, s3.x, s3.y, color);
-        if ((r3.z+r1.z)/2 > 0)
-            g._DrawLine(s3.x, s3.y, s1.x, s1.y, color);
-        */
+        if (wireframe > 0)
+        {
+            if ((r1.z+r2.z)/2 > current_camera.clippingPlane)
+                g._DrawLine(s1.x, s1.y, s2.x, s2.y, color);
+            if ((r2.z+r3.z)/2 > current_camera.clippingPlane)
+                g._DrawLine(s2.x, s2.y, s3.x, s3.y, color);
+            if ((r3.z+r1.z)/2 > current_camera.clippingPlane)
+                g._DrawLine(s3.x, s3.y, s1.x, s1.y, color);
+            return;
+        }
 
         if ((r1.z+r2.z)/2 > current_camera.clippingPlane && (r2.z+r3.z)/2 > current_camera.clippingPlane && (r3.z+r1.z)/2 > current_camera.clippingPlane)
         {
@@ -291,9 +304,25 @@ private:
         }
     }
 
-    static bool compareTwoTris(tri t1, tri t2)
+    bool compareTwoTris(tri t1, tri t2)
     {
-        return (calculateDist(t1).z > calculateDist(t2).z);
+        return (calculateDist(t1) >= calculateDist(t2));
+    }
+
+    void sortTris(std::vector<tri>& arr)
+    {
+        int n = arr.size();
+
+        for (int i = 0; i < n - 1; ++i)
+        {
+            for (int j = 0; j < n - i - 1; ++j)
+            {
+                if (calculateDist(arr[j]) < calculateDist(arr[j + 1]))
+                {
+                    std::swap(arr[j], arr[j + 1]);
+                }
+            }
+        }
     }
 
     void drawTriArray(std::vector<tri> triarray, Graphics g)
@@ -306,11 +335,11 @@ private:
             ta[i] = triarray[i];
         }
 
-        std::sort(ta.begin(), ta.end(), compareTwoTris);
+        sortTris(ta);
 
         for (size_t i = 0; i < triarray.size(); ++i)
         {
-            drawTri(ta[i].p1, ta[i].p2, ta[i].p3, ta[i].rot, ta[i].rot_center, ta[i].color, g);
+            drawTri(ta[i].p1, ta[i].p2, ta[i].p3, ta[i].rot, ta[i].rot_center, ta[i].color, g, ta[i].wireframe);
         }
     }
 };
