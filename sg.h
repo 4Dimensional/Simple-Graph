@@ -160,21 +160,18 @@ public:
             // Keyboard
             if (main_event.type == KeyPress)
             {
-                XAutoRepeatOff(main_display);
                 keydown = true;
                 char buf[128] = {0};
                 keysym_len = XLookupString(&main_event.xkey, buf, sizeof buf, &keysym, NULL);
                 Keyboard(keysym);
                 if (keysym == XK_Escape)
                 {
-                    XAutoRepeatOn(main_display);
                     break;
                 }
                 main_event.type = Expose;
             }
             if (main_event.type == KeyRelease)
             {
-                XAutoRepeatOff(main_display);
                 keydown = false;
                 char buf[128] = {0};
                 keysym_len = XLookupString(&main_event.xkey, buf, sizeof buf, &keysym, NULL);
@@ -199,12 +196,10 @@ public:
 
             XFlush(main_display);
         }
-        XAutoRepeatOn(main_display);
     }
 
     void _CloseWindow()
     {
-        XAutoRepeatOn(main_display);
         XDestroyWindow(main_display, main_window);
         XCloseDisplay(main_display);
     }
